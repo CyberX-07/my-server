@@ -2,37 +2,32 @@ const { Server } = require("colyseus");
 const http = require("http");
 const express = require("express");
 const cors = require('cors');
-
 const path = require("path");
 const { monitor } = require("@colyseus/monitor");
 
 const TicTacToeRoom = require("./rooms/TicTacToeRoom");
 
 const port = process.env.PORT || 2567;
-
-// Create an Express app
 const app = express();
 
-// Enable CORS
 app.use(cors());
 
-// Create an HTTP server
-const server = http.createServer(app);
+// Serve Colyseus.js from the node_modules directory
+app.use("/colyseus", express.static(path.join(__dirname, "node_modules/colyseus.js/dist")));
 
-// Create a Colyseus server with custom seat reservation time (e.g., 10 seconds)
-const gameServer = new Server({
-  server,
-  seatReservationTime: 500, // Set to an appropriate value in seconds
-});
-
-// Register TicTacToeRoom
-gameServer.define("tic-tac-toe", TicTacToeRoom);
-
-// Monitor
-app.use("/colyseus", monitor());
-
+// Serve static files from the public directory
 app.use(express.static(path.join(__dirname, "public")));
 
-// Start the server
-gameServer.listen(port);
-console.log(`Listening on http://localhost:${port}`);
+const server = http.createServer(app);
+const gameServer = new Server({
+  server,
+  seatReservationTime: 500,
+});
+
+gameServer.define("tic-tac-toe", TicTacToeRoom);
+
+app.use("/colyseus", monitor());
+
+server.listen(port, () => {
+    console.log(`Listening on http://localhost:${port}`);
+});

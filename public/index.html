@@ -29,11 +29,28 @@
             font-size: 24px;
             cursor: pointer;
         }
+
+        #room-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        #room-code {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
+    <div id="room-container">
+        <button onclick="createOrJoinRoom()">Create or Join Room</button>
+        <div id="room-code"></div>
+    </div>
+
     <div id="board"></div>
 
+    <!-- Update the script tag to use the Colyseus client from a CDN -->
+    <script type="text/javascript" src="https://unpkg.com/colyseus.js@^0.14.0/dist/colyseus.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
