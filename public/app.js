@@ -1,71 +1,49 @@
 // Initialize socket outside the function scope
 let client = new Colyseus.Client("ws://localhost:2567");
 let room;
-function initColyseus() {
-    client.joinOrCreate("tic-tac-toe", {}).then(room => {
-        console.log("joined successfully", room);
-        room=room;
-      }).catch(e => {
-        console.error("join error", e);
-      });
-
-    /*socket.onOpen = () => {
-        console.log('WebSocket connection opened.');
-        // Call the function to create or join a room once the connection is open
-        createOrJoinRoom();
-    };
-
-    socket.onClose = (event) => {
-        console.log('WebSocket connection closed. Code:', event.code, 'Reason:', event.reason);
-    };
-
-    socket.onError = (error) => {
-        console.error('WebSocket encountered an error:', error);
-    };
-
-    socket.onMessage = (event) => {
-        if (typeof event.data === 'string') {
-            try {
-                const data = JSON.parse(event.data);
-
-                if (data.type === 'updateBoard') {
-                    updateBoard(data.board);
-                } else if (data.type === 'roomJoined') {
-                    roomCode = data.roomCode;
-                    roomCodeElement.textContent = `Room Code: ${roomCode}`;
-                }
-            } catch (error) {
-                console.error('Error parsing JSON:', error);
-            }
-        }
-    };*/
-}
 
 function createOrJoinRoom() {
-    if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({ action: 'joinOrCreateRoom' }));
-    } else {
-        console.error('Socket not ready. Please check your WebSocket setup.');
-    }
+    // Try to join an existing room first
+    client.joinOrCreate("tic-tac-toe").then(joinedRoom => {
+        console.log("Room joined successfully", joinedRoom);
+        room = joinedRoom;
+
+        room.onStateChange.once(() => {
+            // Room has been created or joined, and initial state has been received
+            console.log("Room state received:", room.state);
+        });
+    }).catch(() => {
+        // If joining fails, create a new room
+        client.create("tic-tac-toe").then(createdRoom => {
+            console.log("Room created successfully", createdRoom);
+            room = createdRoom;
+
+            room.onStateChange.once(() => {
+                // Room has been created, and initial state has been received
+                console.log("Room state received:", room.state);
+            });
+        }).catch(e => {
+            console.error("Room creation error", e);
+            // Handle room creation error
+        });
+    });
 }
 
 // Call initColyseus when the DOM content is loaded
 document.addEventListener('DOMContentLoaded', () => {
     const board = document.getElementById('board');
-    const roomCodeElement = document.getElementById('room-code');
     const cells = [];
-    let roomCode = null;
 
     function makeMove(index) {
         console.log('Attempting to make a move...');
 
-        if (socket && socket.readyState === WebSocket.OPEN) {
+        if (room) {
             const row = Math.floor(index / 3);
             const col = index % 3;
 
-            socket.send(JSON.stringify({ action: 'makeMove', row, col }));
+            room.send({ action: 'makeMove', row, col });
         } else {
-            console.error('Socket not ready. Unable to send the move.');
+            console.error('Room not ready. Unable to send the move.');
         }
     }
 
@@ -84,7 +62,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
         cell.addEventListener('click', () => makeMove(i));
     }
-
-    // Start by initializing Colyseus
-    initColyseus();
 });

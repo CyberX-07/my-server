@@ -9,6 +9,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-direction: column;
             height: 100vh;
             margin: 0;
         }
@@ -35,22 +36,38 @@
             margin-top: 20px;
         }
 
-        #room-code {
+        #create-join-button {
             font-size: 18px;
             margin-bottom: 10px;
+            cursor: pointer;
+            padding: 15px 30px;
+            background-color: #4CAF50; /* Green */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            transition-duration: 0.4s;
+            overflow: hidden;
+        }
+
+        #create-join-button:hover {
+            background-color: white;
+            color: black;
+            border: 2px solid #4CAF50;
         }
     </style>
 </head>
 <body>
     <div id="room-container">
-        <button onclick="createOrJoinRoom()">Create or Join Room</button>
-        <div id="room-code"></div>
+        <button id="create-join-button" onclick="createOrJoinRoom()">Create or Join Room</button>
     </div>
 
     <div id="board"></div>
 
     <!-- Update the script tag to use the Colyseus client from a CDN -->
-    <script type="text/javascript" src="https://unpkg.com/colyseus.js@^0.14.0/dist/colyseus.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/colyseus.js@latest/dist/colyseus.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
