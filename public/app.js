@@ -1,65 +1,111 @@
-// Initialize socket outside the function scope
+document.addEventListener('DOMContentLoaded', () => {
+  const createJoinButton = document.getElementById('create-join-button');
+
+  if (createJoinButton) {
+    createJoinButton.addEventListener('click', createOrJoinRoom);
+  } else {
+    console.error("Button not found. Make sure the 'create-join-button' ID is assigned to the button.");
+  }
+});
+
 let client = new Colyseus.Client("ws://localhost:2567");
 let room;
 
-function createOrJoinRoom() {
-    // Try to join an existing room first
-    client.joinOrCreate("tic-tac-toe").then(joinedRoom => {
-        console.log("Room joined successfully", joinedRoom);
-        room = joinedRoom;
+// Function to create or join a room
+async function createOrJoinRoom() {
+  // Disable the button to prevent multiple clicks
+  const createJoinButton = document.getElementById('create-join-button');
+  createJoinButton.disabled = true;
 
-        room.onStateChange.once(() => {
-            // Room has been created or joined, and initial state has been received
-            console.log("Room state received:", room.state);
-        });
-    }).catch(() => {
-        // If joining fails, create a new room
-        client.create("tic-tac-toe").then(createdRoom => {
-            console.log("Room created successfully", createdRoom);
-            room = createdRoom;
+  if (!room) {
+    try {
+      // Try to find an available room with the specified ID
+      const existingRooms = await client.getAvailableRooms("tic-tac-toe");
 
-            room.onStateChange.once(() => {
-                // Room has been created, and initial state has been received
-                console.log("Room state received:", room.state);
-            });
-        }).catch(e => {
-            console.error("Room creation error", e);
-            // Handle room creation error
-        });
-    });
+      if (existingRooms.length > 0) {
+        // Join the first available room
+        room = await client.joinById(existingRooms[0].roomId);
+        console.log("Joining existing room:", room.roomId);
+      } else {
+        // Create a new room with ID "tic-tac-toe"
+        room = await client.create("tic-tac-toe");
+        console.log("Room created successfully", room);
+      }
+
+      // Initialize room listeners
+      initializeRoomListeners();
+
+      // Wait for the client to successfully join the room
+      room.onJoin(() => {
+        console.log("Client successfully joined the room");
+        navigateToGamePage();
+      });
+    } catch (e) {
+      console.error("Error creating/joining room", e);
+      // Enable the button after the attempt is finished
+      createJoinButton.disabled = false;
+    }
+  } else {
+    console.error("User already in a room.");
+    // Enable the button after the check is finished
+    createJoinButton.disabled = false;
+  }
 }
 
-// Call initColyseus when the DOM content is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    const board = document.getElementById('board');
-    const cells = [];
+// Function to navigate to the game page
+function navigateToGamePage() {
+  console.log("Navigating to the game page...");
+  showWaitingMessage("Waiting for player Y to join...");
+  window.location.href = 'game.html';
+}
 
-    function makeMove(index) {
-        console.log('Attempting to make a move...');
+// Function to show a waiting message
+function showWaitingMessage(message) {
+  console.log("Waiting message:", message);
+}
 
-        if (room) {
-            const row = Math.floor(index / 3);
-            const col = index % 3;
+// Function to hide the waiting message
+function hideWaitingMessage() {
+  console.log("Waiting message hidden.");
+}
 
-            room.send({ action: 'makeMove', row, col });
-        } else {
-            console.error('Room not ready. Unable to send the move.');
-        }
+// Function to update the game board UI
+function updateBoard(board) {
+  // Implement logic to update the UI based on the board state
+}
+
+// Function called when both players have joined
+function onBothPlayersJoined() {
+  // Hide the waiting message and start the game
+  hideWaitingMessage();
+  startGame();
+}
+
+// Function to initialize room listeners
+function initializeRoomListeners() {
+  // Add listener for room state changes
+  room.onStateChange((state) => {
+    // Check if both players have joined
+    if (state.players.length === 2) {
+      console.log("Both players joined, starting the game");
+      onBothPlayersJoined();
     }
 
-    function updateBoard(newBoard) {
-        newBoard.forEach((value, index) => {
-            cells[index].innerText = value || '';
-        });
+    // Check if the board exists in the state
+    if (state.board) {
+      // Add listener for board changes
+      state.board.onChange = (value, key) => {
+        console.log("Board change:", value, key);
+        updateBoard(state.board);
+      };
     }
+  });
 
-    for (let i = 0; i < 9; i++) {
-        const cell = document.createElement('div');
-        cell.classList.add('cell');
-        cell.dataset.index = i;
-        cells.push(cell);
-        board.appendChild(cell);
+  // Register handler for "fullState" message
+  room.onMessage("fullState", (fullState) => {
+    // Process the full state received from the server
+    console.log("Full state received:", fullState);
+  });
+}
 
-        cell.addEventListener('click', () => makeMove(i));
-    }
-});
+// Rest of the code...

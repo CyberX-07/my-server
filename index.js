@@ -1,3 +1,4 @@
+// server.js
 const { Server } = require("colyseus");
 const http = require("http");
 const express = require("express");
@@ -21,6 +22,7 @@ app.use(express.static(path.join(__dirname, "public")));
 const server = http.createServer(app);
 const gameServer = new Server({
   server,
+  express: app,
   seatReservationTime: 500,
 });
 
@@ -29,5 +31,5 @@ gameServer.define("tic-tac-toe", TicTacToeRoom);
 app.use("/colyseus", monitor());
 
 server.listen(port, () => {
-    console.log(`Listening on http://localhost:${port}`);
+  console.log(`Listening on http://localhost:${port}`);
 });
