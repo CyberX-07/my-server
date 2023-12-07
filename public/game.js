@@ -1,4 +1,3 @@
-// game.js
 let client = new Colyseus.Client("ws://localhost:2567");
 let room;
 
@@ -21,7 +20,7 @@ function initializeGame() {
 
     room.onMessage('fullState', (state) => {
       console.log("Full state received:", state);
-      initializeBoard(state.board); // Fix: No need for JSON.parse here
+      initializeBoard(state.board);
     });
 
     room.onMessage('startGame', () => {
@@ -41,33 +40,33 @@ function initializeGame() {
 }
 
 function initializeBoard(board) {
-    console.log("Received board state:", board);
-  
-    let parsedBoard;
-  
-    try {
-      // Parse the string as JSON directly
-      parsedBoard = JSON.parse(board);
-    } catch (error) {
-      console.error("Error parsing board state:", error);
-      return;
-    }
-  
-    const boardContainer = document.getElementById('board');
-  
-    if (boardContainer) {
-      boardContainer.innerHTML = ''; // Clear previous content
-  
-      for (let i = 0; i < parsedBoard.length; i++) {
-        const cell = document.createElement('div');
-        cell.classList.add('cell');
-        cell.innerText = parsedBoard[i] || ''; // Use empty string if null
-        boardContainer.appendChild(cell);
-      }
-    } else {
-      console.error("Board container not found.");
-    }
+  console.log("Received board state:", board);
+
+  let parsedBoard;
+
+  try {
+    // Parse the string as JSON directly
+    parsedBoard = JSON.parse(board);
+  } catch (error) {
+    console.error("Error parsing board state:", error);
+    return;
   }
+
+  const boardContainer = document.getElementById('board');
+
+  if (boardContainer) {
+    boardContainer.innerHTML = ''; // Clear previous content
+
+    for (let i = 0; i < parsedBoard.length; i++) {
+      const cell = document.createElement('div');
+      cell.classList.add('cell');
+      cell.innerText = parsedBoard[i] || ''; // Use an empty string if null
+      boardContainer.appendChild(cell);
+    }
+  } else {
+    console.error("Board container not found.");
+  }
+}
 
 function updateBoard(board) {
   const parsedBoard = JSON.parse(board);
@@ -78,7 +77,7 @@ function updateBoard(board) {
   for (let row = 0; row < 3; row++) {
     for (let col = 0; col < 3; col++) {
       const index = row * 3 + col;
-      cells[index].innerText = parsedBoard[row][col] || ''; // Use empty string if null
+      cells[index].innerText = parsedBoard[row][col] || ''; // Use an empty string if null
     }
   }
 }
@@ -96,3 +95,5 @@ function handleCellClick(event) {
   // Send a message to the server when a cell is clicked
   room.send('makeMove', { action: 'makeMove', row, col });
 }
+
+document.addEventListener('DOMContentLoaded', initializeGame);
